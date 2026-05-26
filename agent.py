@@ -2,7 +2,7 @@ import re
 from typing import Optional
 
 from config import REACT_PROMPT_TEMPLATE
-from llm import GeminiLLM
+from llm import DeepSeekLLM
 from tools import ToolExecutor
 
 
@@ -13,7 +13,7 @@ class ReActAgent:
     循环: Thought → Action → Observation → Thought → ...
     """
 
-    def __init__(self, llm_client: GeminiLLM, tool_executor: ToolExecutor, max_steps: int = 8):
+    def __init__(self, llm_client: DeepSeekLLM, tool_executor: ToolExecutor, max_steps: int = 8):
         self.llm_client = llm_client
         self.tool_executor = tool_executor
         self.max_steps = max_steps
@@ -102,7 +102,7 @@ class ReActAgent:
         action_match = re.search(r"Action:\s*(.*?)$", text, re.DOTALL)
 
         thought = thought_match.group(1).strip() if thought_match else None
-        action = action_match.group(1).strip() if action_match else None
+        action = action_match.group(1).strip().strip("`").strip() if action_match else None
         return thought, action
 
     def _parse_action(self, action_text: str) -> tuple[Optional[str], str]:

@@ -1,4 +1,5 @@
 import feedparser
+import yfinance as yf
 from typing import Callable, Optional
 
 
@@ -31,8 +32,50 @@ def fetch_rss(url: str) -> str:
         return f"[fetch_rss] 错误: {e}"
 
 
+def get_stock_info(ticker: str) -> str:
+    """获取股票实时行情和基本面数据"""
+    try:
+        symbol = ticker.strip().upper()
+        stock = yf.Ticker(symbol)
+        info = stock.info
+
+        name = info.get("longName") or info.get("shortName", symbol)
+        currency = info.get("currency", "USD")
+        current_price = info.get("currentPrice") or info.get("regularMarketPrice")
+        prev_close = info.get("previousClose") or info.get("regularMarketPreviousClose")
+        market_cap = info.get("marketCap")
+        pe_ratio = info.get("trailingPE")
+        week_high = info.get("fiftyTwoWeekHigh")
+        week_low = info.get("fiftyTwoWeekLow")
+        sector = info.get("sector", "N/A")
+        analyst_target = info.get("targetMeanPrice")
+
+        if not current_price:
+            return f"[get_stock_info] 未能获取 {symbol} 的行情数据，请确认股票代码正确"
+
+        change_pct = ((current_price - prev_close) / prev_close * 100) if prev_close else None
+        change_str = f"{change_pct:+.2f}%" if change_pct is not None else "N/A"
+
+        market_cap_str = f"${market_cap/1e9:.1f}B" if market_cap else "N/A"
+        pe_str = f"{pe_ratio:.1f}" if pe_ratio else "N/A"
+        target_str = f"{currency} {analyst_target:.2f}" if analyst_target else "N/A"
+        range_str = f"{week_low} - {week_high}" if week_low and week_high else "N/A"
+
+        return (
+            f"股票: {symbol} ({name})\n"
+            f"当前价格: {currency} {current_price:.2f}  涨跌幅: {change_str}\n"
+            f"市值: {market_cap_str}  市盈率(PE): {pe_str}\n"
+            f"52周区间: {range_str}\n"
+            f"分析师目标价: {target_str}\n"
+            f"所属板块: {sector}"
+        )
+
+    except Exception as e:
+        return f"[get_stock_info] 错误: {e}"
+
+
 class ToolExecutor:
-    """工具注册与执行器（按教程4.2.3结构）"""
+    """工具注册与执行器"""
 
     def __init__(self):
         self._tools: dict[str, Callable[[str], str]] = {}
