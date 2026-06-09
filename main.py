@@ -29,11 +29,14 @@ def build_agent() -> tuple[ReActAgent, str]:
 def get_feeds_from_user(preset_list: str) -> list[str]:
     """让用户选择预设 RSS 源或输入自定义源"""
     preset_names = list(FEED_PRESETS.keys())
-    print(f"\n📡 选择新闻源：")
+    print(f"\n📡 选择新闻源（输入 q 退出）：")
     print(preset_list)
     print(f"  {len(preset_names)+1}. 自定义 RSS URL")
 
     choice = input("\n请选择 (输入数字): ").strip()
+    if choice.lower() in ("q", "quit", "exit"):
+        print("再见！")
+        exit(0)
     try:
         idx = int(choice) - 1
         if 0 <= idx < len(preset_names):
@@ -56,7 +59,7 @@ def get_feeds_from_user(preset_list: str) -> list[str]:
 
 
 def format_question(feeds: list[str]) -> str:
-    """将选定的 RSS 源转换为 agent 的问题描述"""
+    """将新闻源列表转换为 agent 的问题描述"""
     feed_list = "\n".join(f"- {url}" for url in feeds)
     return (
         f"请从以下 RSS 源获取最新财经新闻，"
@@ -91,11 +94,6 @@ def main():
         else:
             print("未能生成报告，请检查网络或 API Key。")
         print("=" * 60)
-
-        again = input("\n继续分析？(回车继续 / q 退出): ").strip()
-        if again.lower() in ("q", "quit", "exit"):
-            print("再见！")
-            break
 
 
 if __name__ == "__main__":

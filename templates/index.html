@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="财经分析" />
+  <title>AI 财经分析</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e8eaf0;
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .preset-btn {
+      background: #1e2130;
+      border: 2px solid #2d3148;
+      border-radius: 12px;
+      color: #c9d1e0;
+      padding: 14px 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .preset-btn:active, .preset-btn.selected {
+      background: #1e3a5f;
+      border-color: #3b82f6;
+      color: #93c5fd;
+    }
+
+    .custom-section {
+      margin-bottom: 20px;
+    }
+
+    .custom-toggle {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .custom-toggle:active { color: #9ca3af; }
+
+    .custom-input-area {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .custom-input-area.open { display: block; }
+
+    .custom-input-area textarea {
+      width: 100%;
+      background: #1e2130;
+      border: 1.5px solid #2d3148;
+      border-radius: 10px;
+      color: #e8eaf0;
+      padding: 12px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+    }
+
+    .custom-input-area textarea:focus {
+      border-color: #3b82f6;
+    }
+
+    .custom-input-area small {
+      display: block;
+      margin-top: 5px;
+      color: #6b7280;
+      font-size: 0.75rem;
+    }
+
+    .run-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 28px;
+      transition: opacity 0.18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .run-btn:active { opacity: 0.85; }
+    .run-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .loading.visible { display: block; }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #2d3148;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading p { color: #6b7280; font-size: 0.9rem; }
+
+    /* Result */
+    #result-area { display: none; }
+    #result-area.visible { display: block; }
+
+    .report-card {
+      background: #1e2130;
+      border: 1.5px solid #2d3148;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .report-card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #e8eaf0;
+    }
+
+    .report-card pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #c9d1e0;
+      font-family: inherit;
+    }
+
+    .report-card a {
+      color: #60a5fa;
+      word-break: break-all;
+    }
+
+    .error-msg {
+      background: #2a1515;
+      border: 1.5px solid #7f1d1d;
+      border-radius: 12px;
+      padding: 16px;
+      color: #fca5a5;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    .again-btn {
+      width: 100%;
+      padding: 14px;
+      background: #1e2130;
+      border: 1.5px solid #2d3148;
+      border-radius: 12px;
+      color: #9ca3af;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .again-btn:active { background: #252a40; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>AI 财经分析</h1>
+    <p>选择新闻源，AI 自动获取新闻并分析投资机会</p>
+  </header>
+
+  <div id="input-section">
+    <p class="section-title">选择新闻源</p>
+    <div class="preset-grid" id="preset-grid">
+      {% for name in presets %}
+      <button class="preset-btn" data-preset="{{ name }}">{{ name }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="custom-section">
+      <button class="custom-toggle" id="custom-toggle">
+        <span id="toggle-icon">＋</span> 自定义 RSS URL
+      </button>
+      <div class="custom-input-area" id="custom-input-area">
+        <textarea id="custom-urls" placeholder="每行一个 RSS URL&#10;例如: https://feeds.reuters.com/reuters/businessNews"></textarea>
+        <small>输入自定义 RSS 源时，将忽略上方预设选择</small>
+      </div>
+    </div>
+
+    <button class="run-btn" id="run-btn" disabled>开始分析</button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p id="loading-msg">正在获取新闻并分析，通常需要 1-2 分钟…</p>
+  </div>
+
+  <div id="result-area">
+    <div class="report-card" id="report-card">
+      <h2>📊 财经分析报告</h2>
+      <pre id="report-text"></pre>
+    </div>
+    <button class="again-btn" id="again-btn">重新分析</button>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+</div>
+
+<script>
+  const presetGrid = document.getElementById('preset-grid');
+  const runBtn = document.getElementById('run-btn');
+  const customToggle = document.getElementById('custom-toggle');
+  const customInputArea = document.getElementById('custom-input-area');
+  const customUrlsEl = document.getElementById('custom-urls');
+  const toggleIcon = document.getElementById('toggle-icon');
+  const loading = document.getElementById('loading');
+  const loadingMsg = document.getElementById('loading-msg');
+  const inputSection = document.getElementById('input-section');
+  const resultArea = document.getElementById('result-area');
+  const reportText = document.getElementById('report-text');
+  const errorMsg = document.getElementById('error-msg');
+  const againBtn = document.getElementById('again-btn');
+
+  let selectedPreset = null;
+  let pollInterval = null;
+
+  // Preset selection
+  presetGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.preset-btn');
+    if (!btn) return;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedPreset = btn.dataset.preset;
+    updateRunBtn();
+  });
+
+  // Custom URL toggle
+  customToggle.addEventListener('click', () => {
+    const open = customInputArea.classList.toggle('open');
+    toggleIcon.textContent = open ? '－' : '＋';
+    updateRunBtn();
+  });
+
+  customUrlsEl.addEventListener('input', updateRunBtn);
+
+  function updateRunBtn() {
+    const hasCustom = customInputArea.classList.contains('open') && customUrlsEl.value.trim().length > 0;
+    runBtn.disabled = !selectedPreset && !hasCustom;
+  }
+
+  // Run analysis
+  runBtn.addEventListener('click', startAnalysis);
+
+  async function startAnalysis() {
+    const hasCustom = customInputArea.classList.contains('open') && customUrlsEl.value.trim().length > 0;
+    const body = hasCustom
+      ? { custom_urls: customUrlsEl.value.split('\n').filter(l => l.trim()) }
+      : { preset: selectedPreset };
+
+    inputSection.style.display = 'none';
+    loading.classList.add('visible');
+    resultArea.classList.remove('visible');
+    errorMsg.classList.remove('visible');
+
+    try {
+      const res = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || '启动失败');
+      pollStatus(data.job_id);
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  function pollStatus(jobId) {
+    let dots = 0;
+    pollInterval = setInterval(async () => {
+      dots = (dots + 1) % 4;
+      loadingMsg.textContent = '正在获取新闻并分析，通常需要 1-2 分钟' + '.'.repeat(dots + 1);
+
+      try {
+        const res = await fetch(`/status/${jobId}`);
+        const data = await res.json();
+
+        if (data.status === 'done') {
+          clearInterval(pollInterval);
+          showResult(data.result);
+        } else if (data.status === 'error') {
+          clearInterval(pollInterval);
+          showError(data.result || '分析出错，请重试');
+        }
+      } catch (err) {
+        clearInterval(pollInterval);
+        showError('网络错误，请检查连接后重试');
+      }
+    }, 3000);
+  }
+
+  function showResult(text) {
+    loading.classList.remove('visible');
+    reportText.textContent = text;
+
+    // Make links clickable
+    reportText.innerHTML = reportText.innerHTML.replace(
+      /(https?:\/\/[^\s\n<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener">$1</a>'
+    );
+
+    resultArea.classList.add('visible');
+  }
+
+  function showError(msg) {
+    loading.classList.remove('visible');
+    inputSection.style.display = 'block';
+    errorMsg.textContent = '错误：' + msg;
+    errorMsg.classList.add('visible');
+  }
+
+  againBtn.addEventListener('click', () => {
+    resultArea.classList.remove('visible');
+    errorMsg.classList.remove('visible');
+    inputSection.style.display = 'block';
+  });
+</script>
+</body>
+</html>
