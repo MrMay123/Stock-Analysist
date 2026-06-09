@@ -107,7 +107,9 @@ class ReActAgent:
         if not action_line_match:
             return thought, None
 
-        action = action_line_match.group(1).strip()
+        # Strip markdown immediately so the Finish check works even when the LLM
+        # wraps the whole block in backticks, e.g. Action: `Finish[\n...report...\n]`
+        action = re.sub(r"[`*]+", "", action_line_match.group(1)).strip()
 
         # Finish blocks have multi-line report content — re-extract from "Finish[" to
         # the last "]" in the response so the full report is captured.
