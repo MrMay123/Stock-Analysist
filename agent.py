@@ -99,17 +99,32 @@ class ReActAgent:
     def _parse_output(self, text: str) -> tuple[Optional[str], Optional[str]]:
         """解析 LLM 输出中的 Thought 和 Action"""
         thought_match = re.search(r"Thought:\s*(.*?)(?=\nAction:|$)", text, re.DOTALL)
-        action_match = re.search(r"Action:\s*(.*?)$", text, re.DOTALL)
-
         thought = thought_match.group(1).strip() if thought_match else None
-        action = action_match.group(1).strip() if action_match else None
+
+        # Use MULTILINE so we only capture ONE action line, ignoring any hallucinated
+        # multi-step sequences the LLM might output in a single response.
+        action_line_match = re.search(r"^Action:\s*(.+)", text, re.MULTILINE)
+        if not action_line_match:
+            return thought, None
+
+        action = action_line_match.group(1).strip()
+
+        # Finish blocks have multi-line report content — re-extract from "Finish[" to
+        # the last "]" in the response so the full report is captured.
+        if action.startswith("Finish"):
+            finish_start = text.find("Finish[")
+            if finish_start != -1:
+                finish_match = re.match(r"Finish\[(.*)\]", text[finish_start:], re.DOTALL)
+                if finish_match:
+                    action = f"Finish[{finish_match.group(1)}]"
+
         return thought, action
 
     def _parse_action(self, action_text: str) -> tuple[Optional[str], str]:
         """解析 Action 字符串，格式: ToolName[input]"""
-        # Strip markdown formatting the LLM sometimes adds (backticks, bold markers)
         cleaned = re.sub(r"[`*]+", "", action_text).strip()
-        match = re.match(r"(\w+)\[(.*)\]", cleaned, re.DOTALL)
+        # [^\]]* stops at the first ] so we never greedily consume subsequent actions
+        match = re.match(r"(\w+)\[([^\]]*)\]", cleaned)
         if match:
             return match.group(1), match.group(2)
         return None, ""
