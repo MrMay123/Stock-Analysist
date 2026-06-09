@@ -39,15 +39,15 @@ History:
 FEED_PRESETS = {
     "财经（综合）": [
         "https://finance.yahoo.com/news/rssindex",
-        "https://feeds.reuters.com/reuters/businessNews",
+        "https://www.cnbc.com/id/15839135/device/rss/rss.html",
         "https://feeds.marketwatch.com/marketwatch/topstories/",
         "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     ],
     "财经（美股重点）": [
         "https://finance.yahoo.com/news/rssindex",
         "https://feeds.marketwatch.com/marketwatch/topstories/",
-        "https://feeds.bloomberg.com/markets/news.rss",
         "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+        "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     ],
     "科技": [
         "https://feeds.feedburner.com/TechCrunch",

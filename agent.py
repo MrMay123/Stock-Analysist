@@ -107,7 +107,9 @@ class ReActAgent:
 
     def _parse_action(self, action_text: str) -> tuple[Optional[str], str]:
         """解析 Action 字符串，格式: ToolName[input]"""
-        match = re.match(r"(\w+)\[(.*)\]", action_text, re.DOTALL)
+        # Strip markdown formatting the LLM sometimes adds (backticks, bold markers)
+        cleaned = re.sub(r"[`*]+", "", action_text).strip()
+        match = re.match(r"(\w+)\[(.*)\]", cleaned, re.DOTALL)
         if match:
             return match.group(1), match.group(2)
         return None, ""
