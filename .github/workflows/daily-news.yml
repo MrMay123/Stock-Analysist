@@ -2,8 +2,11 @@ name: Daily Telegram News Digest
 
 on:
   schedule:
-    # 12:00 UTC daily; adjust to taste (GitHub Actions cron does not follow DST).
-    - cron: "0 12 * * *"
+    # 13:00 UTC = 9:00 AM ET during US daylight saving time (EDT, UTC-4).
+    # GitHub Actions cron does not follow DST — switch to "0 14 * * *" once
+    # the US falls back to standard time (EST, UTC-5) in early November,
+    # and back to "0 13 * * *" when DST resumes in March, to keep 9:00 AM ET.
+    - cron: "0 13 * * *"
   workflow_dispatch: {}
 
 jobs:
